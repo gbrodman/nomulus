@@ -88,6 +88,7 @@ public final class RegistryTestServer {
           route("/registry-lock-verify", FrontendServlet.class));
 
   private static final ImmutableList<Class<? extends Filter>> FILTERS = ImmutableList.of(
+      IapSimulatingFilter.class,
       ObjectifyFilter.class,
       OfyFilter.class);
 

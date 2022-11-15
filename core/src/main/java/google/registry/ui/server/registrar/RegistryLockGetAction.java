@@ -46,9 +46,12 @@ import google.registry.request.auth.AuthenticatedRegistrarAccessor;
 import google.registry.request.auth.AuthenticatedRegistrarAccessor.RegistrarAccessDeniedException;
 import google.registry.request.auth.UserAuthInfo;
 import google.registry.security.JsonResponseHelper;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import org.joda.time.DateTime;
 
 /**
@@ -83,6 +86,7 @@ public final class RegistryLockGetAction implements JsonGetAction {
   @VisibleForTesting AuthenticatedRegistrarAccessor registrarAccessor;
   @VisibleForTesting AuthResult authResult;
   @VisibleForTesting Optional<String> paramClientId;
+  private final HttpServletRequest req;
 
   @Inject
   RegistryLockGetAction(
@@ -90,12 +94,14 @@ public final class RegistryLockGetAction implements JsonGetAction {
       Response response,
       AuthenticatedRegistrarAccessor registrarAccessor,
       AuthResult authResult,
+      HttpServletRequest req,
       @Parameter(PARAM_CLIENT_ID) Optional<String> paramClientId) {
     this.method = method;
     this.response = response;
     this.registrarAccessor = registrarAccessor;
     this.authResult = authResult;
     this.paramClientId = paramClientId;
+    this.req = req;
   }
 
   @Override
@@ -104,6 +110,12 @@ public final class RegistryLockGetAction implements JsonGetAction {
     checkArgument(authResult.userAuthInfo().isPresent(), "User auth info must be present");
     checkArgument(paramClientId.isPresent(), "clientId must be present");
     response.setContentType(MediaType.JSON_UTF_8);
+
+    List<String> headerNames = Collections.list(req.getHeaderNames());
+    for (String headerName : headerNames) {
+      String value = req.getHeader(headerName);
+      logger.atSevere().log("HEADER: %s: %s", headerName, value);
+    }
 
     try {
       ImmutableMap<String, ?> resultMap = getLockedDomainsMap(paramClientId.get());
